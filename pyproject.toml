@@ -1,0 +1,30 @@
+[project]
+name = "comet-kvm"
+version = "0.1.0"
+description = "Hardware peripherals for autonomous agents through GL.iNet Comet KVMs"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.26,<2",
+    "aiohttp>=3.13,<4",
+    "anyio>=4.5,<5",
+    "pydantic>=2.11,<3",
+    "av>=16,<18",
+    "pillow>=12,<13",
+]
+
+[project.scripts]
+comet-kvm = "comet_kvm.server:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.13"]
+
+[tool.uv]
+default-groups = []  # Plugin launches install runtime dependencies only.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

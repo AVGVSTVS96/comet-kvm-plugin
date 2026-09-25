@@ -1,0 +1,21 @@
+{
+  "name": "comet-kvm",
+  "version": "0.1.0",
+  "description": "Display, keyboard, mouse, and ATX access to named GL.iNet Comet KVMs.",
+  "author": {
+    "name": "Bassim Shahidy"
+  },
+  "mcpServers": {
+    "comet-kvm": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "--locked",
+        "comet-kvm"
+      ]
+    }
+  }
+}

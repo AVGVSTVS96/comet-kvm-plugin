@@ -1,0 +1,13 @@
+{
+  "name": "comet-kvm",
+  "owner": {
+    "name": "Bassim Shahidy"
+  },
+  "plugins": [
+    {
+      "name": "comet-kvm",
+      "source": "./",
+      "description": "Display, keyboard, mouse, and ATX access to named GL.iNet Comet KVMs."
+    }
+  ]
+}

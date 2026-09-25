@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "comet-kvm",
+  "version": "0.1.0",
+  "description": "Display, keyboard, mouse, and ATX access to named GL.iNet Comet KVMs.",
+  "author": {
+    "name": "Bassim Shahidy"
+  }
+}

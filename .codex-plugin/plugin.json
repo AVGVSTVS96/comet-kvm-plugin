@@ -1,0 +1,22 @@
+{
+  "name": "comet-kvm",
+  "version": "0.1.0",
+  "description": "Display, keyboard, mouse, and ATX access to named GL.iNet Comet KVMs.",
+  "author": {
+    "name": "Bassim Shahidy"
+  },
+  "interface": {
+    "displayName": "Comet KVM",
+    "shortDescription": "Operate computers through Comet KVM hardware.",
+    "longDescription": "Display, keyboard, mouse, and ATX access to named GL.iNet Comet KVMs.",
+    "developerName": "Bassim Shahidy",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use my Comet KVM to inspect the other computer."
+    ]
+  }
+}
