@@ -1,0 +1,14 @@
+{
+  "comets": {
+    "server": {
+      "url": "https://glkvm.local",
+      "username": "admin",
+      "password_command": ["security", "find-generic-password", "-s", "comet-kvm", "-a", "admin", "-w"],
+      "ca_file": "~/.config/comet-kvm/comet-ca.crt"
+    },
+    "desktop": {
+      "url": "https://192.168.1.11",
+      "password": "replace-with-device-password"
+    }
+  }
+}
