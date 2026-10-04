@@ -7,6 +7,7 @@ import ssl
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import aiohttp
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -26,6 +27,11 @@ class Endpoint(BaseModel):
     password: SecretStr | None = None
     password_command: list[str] | None = Field(default=None, min_length=1)
     ca_file: str | None = None
+    # Pin a self-signed certificate by SHA-256 instead of CA/hostname/date checks.
+    cert_sha256: str | None = Field(
+        default=None, pattern=r"^([0-9A-Fa-f]{2}:?){31}[0-9A-Fa-f]{2}$"
+    )
+    keymap: str = Field(default="en-us", pattern=r"^[a-z]{2}(-[a-z]{2})?$")
 
     @model_validator(mode="after")
     def validate_endpoint(self):
@@ -44,10 +50,14 @@ class Endpoint(BaseModel):
             )
         if (self.password is None) == (self.password_command is None):
             raise ValueError("provide exactly one of password or password_command")
+        if self.cert_sha256 and self.ca_file:
+            raise ValueError("provide at most one of ca_file or cert_sha256")
         self.url = self.url.rstrip("/")
         return self
 
     def tls_context(self):
+        if self.cert_sha256:
+            return aiohttp.Fingerprint(bytes.fromhex(self.cert_sha256.replace(":", "")))
         return ssl.create_default_context(
             cafile=str(Path(self.ca_file).expanduser()) if self.ca_file else None
         )
