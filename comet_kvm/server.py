@@ -113,7 +113,7 @@ def build_server(config):
     async def type_text(
         comet: str, text: Annotated[str, Field(min_length=1, max_length=1024)]
     ) -> str:
-        """Type text via USB keyboard using the US layout; remote layout must match.
+        """Type text via USB keyboard using the Comet's configured keymap; remote layout must match.
         Accepts printable ASCII, tab, and newline (which presses Enter). Does not append Enter.
         Unsupported characters are rejected before any input. This is typing, not clipboard paste.
         """
@@ -127,7 +127,7 @@ def build_server(config):
                 "/api/hid/print",
                 params={
                     "limit": "0",
-                    "keymap": "en-us",
+                    "keymap": client.endpoint.keymap,
                     "slow": "true",
                 },
                 data=text.encode(),

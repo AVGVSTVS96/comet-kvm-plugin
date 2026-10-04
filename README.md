@@ -75,6 +75,8 @@ and name each Comet:
 | `password` | the device password, **or** |
 | `password_command` | argv for a credential helper, run without a shell; stdout is the password |
 | `ca_file` | extra CA for the Comet's certificate; HTTPS is always verified |
+| `cert_sha256` | pin the Comet's certificate by SHA-256 fingerprint instead of `ca_file`; use for the factory self-signed certificate (CN `localhost`, expired validity), which CA verification rejects |
+| `keymap` | keymap for `type_text`, matching the remote OS layout; defaults to `en-us` (e.g. `fr` for AZERTY) |
 
 `COMET_KVM_CONFIG` or `--config` selects another file. Restrict its permissions if it
 holds a password. Changes apply when the MCP server restarts.
