@@ -71,6 +71,7 @@ and name each Comet:
 | field | |
 | --- | --- |
 | `url` | HTTP(S) origin of the Comet |
+| `address` | name or IP to connect to instead, like a tailnet name when the certificate names only the LAN one |
 | `username` | defaults to `admin` |
 | `password` | the device password, **or** |
 | `password_command` | argv for a credential helper, run without a shell; stdout is the password |
@@ -93,6 +94,18 @@ holds a password. Changes apply when the MCP server restarts.
 | `power_state` | raw ATX availability, busy state, power, and LEDs |
 | `press_atx` | short power, long power, or reset |
 
+An agent without an MCP client, like a headless run over SSH, calls the same tools
+from a shell:
+
+```bash
+comet-kvm call screenshot '{"comet": "server"}' --out screen.jpg
+credential-helper | comet-kvm call type_text '{"comet": "server"}' --stdin text
+comet-kvm call press_keys '{"comet": "server", "keys": ["Enter"]}'
+```
+
+`--stdin` reads one argument from standard input, which keeps a secret out of argv,
+and drops one trailing newline, so a piped secret is typed without Enter.
+
 The bundled skill teaches agents the operating habits: observe, act in small steps,
 observe again, and treat the screen as the only evidence of an input's effect.
 
@@ -101,6 +114,12 @@ observe again, and treat the screen as the only evidence of an input's effect.
 Each Comet gets one lazily authenticated, serialized session, so different Comets
 operate concurrently. Before every operation the session is checked and, if needed,
 re-established, so a dropped connection never swallows the next input.
+
+A Comet types text one key at a time and takes keys from every client at once, so
+two agents typing together reach the computer as one mixed string. Input and power
+therefore take turns across processes: an agent that acts within 60 seconds of another
+agent's input is refused, told who has the keyboard, and sends nothing. Observation is
+never refused. Agents are told apart by `COMET_KVM_AGENT`, else Claude Code's session.
 
 Screenshots use the snapshot endpoint when it returns real JPEG bytes. Some firmware
 returns H.264 under a JPEG content type, and then the server decodes a fresh frame

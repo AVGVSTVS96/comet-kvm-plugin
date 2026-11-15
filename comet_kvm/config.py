@@ -22,6 +22,7 @@ from . import CometError
 class Endpoint(BaseModel):
     model_config = ConfigDict(extra="forbid")
     url: str
+    address: str | None = None
     username: str = "admin"
     password: SecretStr | None = None
     password_command: list[str] | None = Field(default=None, min_length=1)

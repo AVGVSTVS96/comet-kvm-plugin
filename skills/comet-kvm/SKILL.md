@@ -19,6 +19,10 @@ evidence; a successful input call only confirms delivery to the KVM.
 - Text entry simulates a US keyboard. Check the remote layout and Caps Lock,
   especially for passwords or punctuation. Unicode is not clipboard paste.
 - After an uncertain action, inspect the result before deciding what to repeat.
+- A masked field shows one mark per key: type a secret without its newline, count
+  the marks, then press Enter. A cleared field alone doesn't say the secret was wrong.
+- A refused input names another agent at this keyboard. Observe, and agree who
+  drives before either types.
 
 ## Mouse
 

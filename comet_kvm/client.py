@@ -2,14 +2,33 @@
 
 import asyncio
 import json
-from contextlib import asynccontextmanager, suppress
+import socket
+from contextlib import asynccontextmanager, nullcontext, suppress
 
 import aiohttp
 import anyio
+from aiohttp.abc import AbstractResolver
+from aiohttp.resolver import DefaultResolver
 
 from . import CometError
 from .capture import capture
 from .config import Endpoint
+from .turn import turn
+
+
+class At(AbstractResolver):
+    """Connect to another name or IP while TLS still verifies the URL's own name."""
+
+    def __init__(self, address):
+        self.address = address
+        self.resolver = DefaultResolver()
+
+    async def resolve(self, host, port=0, family=socket.AF_INET):
+        found = await self.resolver.resolve(self.address, port, family)
+        return [{**record, "hostname": host} for record in found]
+
+    async def close(self):
+        await self.resolver.close()
 
 
 class Comet:
@@ -36,7 +55,10 @@ class Comet:
     async def connect(self):
         await self.close()
         self.http = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=self.endpoint.tls_context()),
+            connector=aiohttp.TCPConnector(
+                ssl=self.endpoint.tls_context(),
+                resolver=At(self.endpoint.address) if self.endpoint.address else None,
+            ),
             cookie_jar=aiohttp.DummyCookieJar(),
             timeout=aiohttp.ClientTimeout(total=60, connect=10),
         )
@@ -124,7 +146,8 @@ class Comet:
 
     @asynccontextmanager
     async def operation(self, *, mutation=False):
-        async with self.lock:
+        # The turn is taken outside the try: a refused turn sent nothing.
+        async with self.lock, turn(self.endpoint.url) if mutation else nullcontext():
             try:
                 if (
                     self.ws is None

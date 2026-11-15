@@ -2,11 +2,16 @@
 
 import argparse
 import asyncio
+import base64
+import json
 import re
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP, Image
+from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
@@ -239,14 +244,50 @@ def build_server(config):
     return mcp
 
 
+async def call(mcp, tool, arguments, out):
+    async with mcp.settings.lifespan(mcp):  # Closes sessions like shutdown.
+        try:
+            result = await mcp.call_tool(tool, arguments)
+        except ToolError as error:
+            return str(error)
+    for block in result[0] if isinstance(result, tuple) else result:
+        if block.type == "text":
+            print(block.text)
+        elif not out:
+            return "This tool returns an image; pass --out FILE"
+        else:
+            Path(out).write_bytes(base64.b64decode(block.data))
+            print(f"Wrote {out}")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Comet KVM MCP server (stdio)")
+    parser = argparse.ArgumentParser(
+        description="Comet KVM MCP server (stdio), or one tool call with `call`"
+    )
     parser.add_argument(
         "--config",
         help="JSON configuration; defaults to COMET_KVM_CONFIG or ~/.config/comet-kvm/config.json",
     )
+    once = parser.add_subparsers(dest="command").add_parser(
+        "call", help="Call one tool and exit, for agents without an MCP client"
+    )
+    once.add_argument("tool")
+    once.add_argument("arguments", nargs="?", default="{}", help="Arguments as JSON")
+    once.add_argument(
+        "--stdin",
+        metavar="ARGUMENT",
+        help="Read this argument from standard input, keeping a secret out of argv; "
+        "one trailing newline is dropped, so a piped secret is typed without Enter",
+    )
+    once.add_argument("--out", metavar="FILE", help="Write an image result here")
     args = parser.parse_args()
-    build_server(load_config(args.config)).run()
+    mcp = build_server(load_config(args.config))
+    if args.command is None:
+        return mcp.run()
+    arguments = json.loads(args.arguments)
+    if args.stdin:
+        arguments[args.stdin] = sys.stdin.read().removesuffix("\n")
+    sys.exit(asyncio.run(call(mcp, args.tool, arguments, args.out)))
 
 
 if __name__ == "__main__":

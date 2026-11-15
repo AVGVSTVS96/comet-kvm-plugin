@@ -22,6 +22,7 @@ class FakeComet:
         self.logins = 0
         self.tokens = set()
         self.events = []
+        self.received = ""
         self.atx = {"enabled": True, "busy": False, "leds": {"power": False}}
         self.atx_posts = 0
         self.drop_atx = False
@@ -99,7 +100,12 @@ class FakeComet:
         return ok()
 
     async def print(self, request):
-        self.events.append(("print", await request.text()))
+        text = await request.text()
+        self.events.append(("print", text))
+        # As kvmd does with slow=true: a pause before each key, no lock.
+        for key in text:
+            await asyncio.sleep(0.02)
+            self.received += key
         return ok()
 
 
@@ -108,15 +114,21 @@ def anyio_backend():
     return "asyncio"
 
 
+@pytest.fixture(autouse=True)
+def agent(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    monkeypatch.setenv("COMET_KVM_AGENT", "tester")
+
+
 @pytest.fixture
 async def comet():
     fake = FakeComet()
     server = TestServer(fake.app(), host="127.0.0.1")
     await server.start_server()
-    config = Configuration.model_validate(
-        {"comets": {"lab": {"url": str(server.make_url("/")), "password": "secret"}}}
-    )
-    fake.mcp = build_server(config)
+    fake.config = {
+        "comets": {"lab": {"url": str(server.make_url("/")), "password": "secret"}}
+    }
+    fake.mcp = build_server(Configuration.model_validate(fake.config))
     async with fake.mcp.settings.lifespan(fake.mcp):  # Closes sessions like shutdown.
         yield fake
     await server.close()
